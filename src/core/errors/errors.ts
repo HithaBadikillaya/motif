@@ -1,9 +1,9 @@
 import type { ZodError } from 'zod';
 
 interface AppErrorOptions {
-  code?: string;
-  exitCode?: number;
-  hint?: string;
+  code?: string | undefined;
+  exitCode?: number | undefined;
+  hint?: string | undefined;
   cause?: unknown;
 }
 
