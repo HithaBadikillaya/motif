@@ -1,21 +1,26 @@
 # Motif
 
-Motif is a production-grade cross-platform CLI foundation built with Bun and TypeScript.
-
-This initial version focuses on architecture, extensibility, and developer experience. Repository intelligence and AI workflows are intentionally not implemented yet.
+Motif is a cross-platform CLI foundation built with Bun and TypeScript.
 
 ## Features
 
-- Commander.js command routing with aliases and helpful errors
-- Global and local configuration loading with Zod validation
-- Colored output with Chalk
-- Ora progress indicators
-- Enquirer prompts
-- Pino verbose/debug logging
-- Ink-ready terminal UI components
-- Shell completion preparation
-- Graceful structured error handling
-- Strict TypeScript, Vitest, ESLint, Prettier, tsup, TypeDoc, Changesets, Husky, and lint-staged
+- **Git Repository Engine**: Native git parsing for history, branches, tags, diffs, blame, churn, and conventional commits
+- **Performance & Caching**: Streaming/incremental log parsing with JSON file caching keyed by commit SHA
+- **Commander.js Command Routing**: Clean command architecture with options, validation, and structured output
+- **Environment Diagnostics**: Extended `doctor` command validating Node/Bun runtimes, configuration, git CLI availability, and repo health
+- **Global & Local Configuration**: Zod-validated configuration loading (`~/.motif/config.json` and `motif.config.json`)
+- **Strict Developer Standards**: TypeScript, Vitest, ESLint, Prettier, tsup, TypeDoc, Changesets, Husky, and lint-staged
+
+## Engine Design & Rationale
+
+### Subprocess `git` Engine vs `isomorphic-git` / `simple-git`
+
+Motif chooses system `git` subprocess execution via Node's `execFile` / `Readable` streams over JS reimplementations (`isomorphic-git`) or wrapper libraries (`simple-git`):
+
+- **Performance**: Native C git handles large history traversals and packfile decompression orders of magnitude faster than pure JS engines.
+- **Zero Native Binary Overhead**: Shells directly to installed `git` binaries — no native node-gyp bindings or binary downloads required.
+- **Safety**: Runs with `GIT_OPTIONAL_LOCKS=0` to prevent background index locking and safe directory configuration overrides.
+- **Streaming & Pagination**: Built-in `stream()` async generator and paginated queries prevent loading full repository logs into memory.
 
 ## Install
 
@@ -28,27 +33,30 @@ bun run build
 
 ```bash
 bun run dev -- --help
-bun run dev -- version
+bun run dev -- analyze
+bun run dev -- history --author "Alice" --limit 10
+bun run dev -- stats
 bun run dev -- doctor
-bun run dev -- init
-bun run dev -- completion bash
 ```
 
 After building:
 
 ```bash
-./dist/index.js --help
+./dist/index.js analyze
 ```
 
 ## Commands
 
-| Command      | Alias   | Description                                        |
-| ------------ | ------- | -------------------------------------------------- |
-| `version`    | `v`     | Print the Motif version                            |
-| `doctor`     | `check` | Validate the runtime environment and configuration |
-| `init`       | `i`     | Create `motif.config.json`                         |
-| `completion` |         | Print shell completion setup                       |
-| `help`       |         | Show CLI or command help                           |
+| Command      | Alias   | Description                                                             |
+| ------------ | ------- | ----------------------------------------------------------------------- |
+| `analyze`    |         | Run full repository analysis (commits, churn hotspots, branch health)   |
+| `history`    |         | Query commit history with `--author`, `--since`, `--file` filters       |
+| `stats`      |         | Repository statistics (LOC by extension, commit frequency, top authors) |
+| `doctor`     | `check` | Validate runtime environment, config, git availability, & repo health   |
+| `init`       | `i`     | Create `motif.config.json`                                              |
+| `version`    | `v`     | Print the Motif version                                                 |
+| `completion` |         | Print shell completion setup                                            |
+| `help`       |         | Show CLI or command help                                                |
 
 ## Configuration
 
@@ -104,19 +112,17 @@ bun run build
 
 ```text
 src/
-  ai/            Future AI integration contracts
-  analyzers/     Future analysis contracts
-  cache/         Cache abstractions
-  cli/           Commander commands, runtime context, and UI
+  analyzers/     Repository analyzers (churn, conventional commit patterns, LOC, contributors)
+  cache/         Cache abstractions & JSON file cache store
+  cli/           Commander commands (analyze, history, stats, doctor, init, completion)
   config/        Config schemas, defaults, and loading
-  core/          Environment checks, errors, and services
-  git/           Git operation contracts
+  core/
+    errors/      Error definitions & formatting
+    git/         Git services (repository, history, diff, refs, blame, metadata, status)
   logging/       Pino logger factory
-  parsers/       Parser contracts
-  plugins/       Plugin contracts
-  providers/     Provider contracts
-  types/         Shared public types
-  utils/         Small platform utilities
+  parsers/       Parsers (git log, unified diff, shortlog, conventional commits)
+  types/         Shared strict TypeScript interfaces (git, runtime, config)
+  utils/         File system and package helpers
 ```
 
 ## Release Workflow
