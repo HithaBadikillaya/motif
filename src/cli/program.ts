@@ -1,7 +1,11 @@
 import { Command } from 'commander';
+import { createAnalyzeCommand } from './commands/analyze.js';
 import { createCompletionCommand } from './commands/completion.js';
 import { createDoctorCommand } from './commands/doctor.js';
+import { createHistoryCommand } from './commands/history.js';
 import { createInitCommand } from './commands/init.js';
+import { createInspectCommand } from './commands/inspect.js';
+import { createStatsCommand } from './commands/stats.js';
 import { createVersionCommand } from './commands/version.js';
 import { createRuntimeContext } from './runtime/context.js';
 import { createOutput } from './ui/output.js';
@@ -22,20 +26,39 @@ export async function createCli(): Promise<Command> {
     .option('--global-config <path>', 'Use a custom global configuration file.')
     .option('--verbose', 'Enable verbose logging.')
     .option('--debug', 'Enable debug diagnostics.')
-    .hook('preAction', async (thisCommand) => {
-      const options = thisCommand.optsWithGlobals();
-      thisCommand.setOptionValue('runtime', await createRuntimeContext(options));
+    .hook('preAction', async (thisCommand, actionCommand) => {
+      const options = actionCommand.optsWithGlobals();
+      const runtime = await createRuntimeContext(options);
+      actionCommand.setOptionValue('runtime', runtime);
+      thisCommand.setOptionValue('runtime', runtime);
     });
 
   program.addCommand(createVersionCommand(), { hidden: true });
   program.addCommand(createDoctorCommand());
   program.addCommand(createInitCommand());
+  program.addCommand(createInspectCommand());
   program.addCommand(createCompletionCommand());
+  program.addCommand(createAnalyzeCommand());
+  program.addCommand(createHistoryCommand());
+  program.addCommand(createStatsCommand());
+
   program
     .command('__complete', { hidden: true })
     .allowUnknownOption()
     .action(() => {
-      console.log(['init', 'doctor', 'completion', 'version', 'help'].join('\n'));
+      console.log(
+        [
+          'init',
+          'doctor',
+          'inspect',
+          'completion',
+          'version',
+          'analyze',
+          'history',
+          'stats',
+          'help',
+        ].join('\n'),
+      );
     });
 
   program

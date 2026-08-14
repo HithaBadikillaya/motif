@@ -4,13 +4,15 @@ import { formatError, toCliError } from '../../core/errors/errors.js';
 export type CommanderAction = (...args: unknown[]) => Promise<void> | void;
 
 export function getRuntimeContext(args: unknown[]): RuntimeContext {
-  const command = args.at(-1) as
-    { optsWithGlobals?: () => { runtime?: RuntimeContext } } | undefined;
-  const runtime = command?.optsWithGlobals?.().runtime;
-  if (!runtime) {
-    throw new Error('Runtime context was not initialized.');
+  for (let i = args.length - 1; i >= 0; i--) {
+    const item = args[i] as
+      | { optsWithGlobals?: () => { runtime?: RuntimeContext }; runtime?: RuntimeContext }
+      | undefined;
+    if (item?.runtime) return item.runtime;
+    const runtime = item?.optsWithGlobals?.().runtime;
+    if (runtime) return runtime;
   }
-  return runtime;
+  throw new Error('Runtime context was not initialized.');
 }
 
 export function withErrorHandling(action: CommanderAction): CommanderAction {
