@@ -39,10 +39,6 @@ export class GitRepositoryService {
     return this.detect(cwd);
   }
 
-  /**
-   * Return the root of the nearest git repository, searching upward from `cwd`.
-   * Returns undefined if no git repo is found.
-   */
   async rootFromCwd(cwd = process.cwd()): Promise<string | undefined> {
     const result = await runGit(['rev-parse', '--show-toplevel'], {
       cwd,
@@ -51,9 +47,6 @@ export class GitRepositoryService {
     return result.stdout.trim() || undefined;
   }
 
-  /**
-   * Run a structured health check on the repository at `cwd`.
-   */
   async isHealthy(cwd = process.cwd()): Promise<GitRepositoryHealth> {
     const info = await this.detect(cwd);
     const issues: string[] = [];
@@ -69,12 +62,10 @@ export class GitRepositoryService {
       };
     }
 
-    // Check HEAD resolves
     const headResult = await runGit(['rev-parse', '--verify', 'HEAD'], { cwd, allowFailure: true });
     const headResolvable = Boolean(headResult.stdout.trim());
     if (!headResolvable) issues.push('HEAD does not resolve to a commit (empty repo or corrupt)');
 
-    // Check for index.lock (stale lock file)
     const gitDir = info.gitDir || join(info.root, '.git');
     const lockPath = join(gitDir.startsWith('/') ? gitDir : join(info.root, gitDir), 'index.lock');
     let hasLockFile = false;
@@ -82,11 +73,8 @@ export class GitRepositoryService {
       await access(lockPath);
       hasLockFile = true;
       issues.push('index.lock exists — another git process may be running');
-    } catch {
-      // No lock file — good
-    }
+    } catch {}
 
-    // Quick objects integrity check via rev-parse on HEAD tree
     const treeResult = await runGit(['rev-parse', '--verify', 'HEAD^{tree}'], {
       cwd,
       allowFailure: true,
