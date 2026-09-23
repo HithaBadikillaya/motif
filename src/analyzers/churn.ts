@@ -49,7 +49,7 @@ export class ChurnAnalyzer implements Analyzer<ChurnInput, ChurnResult> {
 
       const parts = line.split('\t');
       if (parts.length < 3) continue;
-      const [addStr = '0', delStr = '0, ...pathParts'] = parts;
+      const [addStr = '0', delStr = '0'] = parts;
       const file = parts.slice(2).join('\t');
       if (!file) continue;
 

@@ -1,4 +1,4 @@
-import type { RepositoryAnalysis } from '../types/git.js';
+import type { GitOwnership, RepositoryAnalysis } from '../types/git.js';
 import { GitBlameService } from '../core/git/blame.js';
 import { GitHistoryService } from '../core/git/history.js';
 import { GitMetadataService } from '../core/git/metadata.js';
@@ -45,10 +45,10 @@ export class RepositoryAnalyzer {
     const recentCommits = await this.history.list(cwd, { limit: 500 });
     const messagePatterns = this.patterns.analyze(recentCommits);
 
+    let ownership: GitOwnership[] = [];
     if (blameTopN > 0 && churnResult.hotspots.length > 0) {
       const topFiles = churnResult.hotspots.slice(0, blameTopN).map((f) => f.file);
-      await this.blame.ownership(cwd, topFiles);
-      // ownership is returned for future use; not yet part of RepositoryAnalysis type
+      ownership = await this.blame.ownership(cwd, topFiles);
     }
 
     return {
@@ -62,6 +62,7 @@ export class RepositoryAnalyzer {
       tags,
       metadata,
       status,
+      ownership,
     };
   }
 }

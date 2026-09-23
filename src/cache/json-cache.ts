@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { CacheStore } from './index.js';
 
@@ -32,6 +32,19 @@ export class JsonFileCache<T> implements CacheStore<T> {
     try {
       await unlink(this.pathFor(key));
     } catch {}
+  }
+
+  async clear(): Promise<void> {
+    try {
+      const entries = await readdir(this.directory);
+      await Promise.all(
+        entries
+          .filter((name) => name.endsWith('.json'))
+          .map((name) => unlink(join(this.directory, name)).catch(() => {})),
+      );
+    } catch {
+      // Directory may not exist yet — nothing to clear.
+    }
   }
 
   private pathFor(key: string): string {
