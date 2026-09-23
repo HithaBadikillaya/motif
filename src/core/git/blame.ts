@@ -53,10 +53,14 @@ export class GitBlameService {
   }
 
   async ownership(cwd: string, files: string[]): Promise<GitOwnership[]> {
+    // Resolve HEAD once so all blame() calls can use the same cache key.
+    const headResult = await runGit(['rev-parse', 'HEAD'], { cwd, allowFailure: true });
+    const headSha = headResult.stdout.trim() || undefined;
+
     const ownership: GitOwnership[] = [];
     for (const file of files) {
       const counts = new Map<string, { name: string; email: string; lines: number }>();
-      for (const line of await this.blame(cwd, file)) {
+      for (const line of await this.blame(cwd, file, headSha)) {
         const key = `${line.authorName}<${line.authorEmail}>`;
         const current = counts.get(key) ?? {
           name: line.authorName,

@@ -146,6 +146,8 @@ export interface RepositoryAnalysis {
   tags: GitTag[];
   metadata: GitRepositoryMetadata;
   status: GitStatus;
+  /** Blame-based ownership for top churn files. Populated when `blameTopN > 0`. */
+  ownership: GitOwnership[];
 }
 
 export interface RepositoryStats {

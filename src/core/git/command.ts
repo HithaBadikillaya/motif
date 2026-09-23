@@ -22,7 +22,6 @@ export async function runGit(
   try {
     const result = await execFileAsync('git', args, {
       cwd: options.cwd,
-      // 100 MB — supports very large diffs/blames
       maxBuffer: 1024 * 1024 * 100,
       env: {
         ...process.env,
@@ -46,10 +45,6 @@ export async function runGit(
   }
 }
 
-/**
- * Spawn a git process and return its stdout as a Node.js Readable stream.
- * Useful for very large outputs that should not be buffered in memory.
- */
 export function streamGit(args: string[], cwd: string): Readable {
   const child = execFile('git', args, {
     cwd,
@@ -61,7 +56,6 @@ export function streamGit(args: string[], cwd: string): Readable {
       GIT_CONFIG_VALUE_0: '*',
     },
   });
-  // Return the stdout stream; callers handle 'data'/'end'/'error'
   return child.stdout as Readable;
 }
 
