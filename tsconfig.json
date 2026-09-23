@@ -19,5 +19,5 @@
     "types": ["bun-types", "node"]
   },
   "include": ["src", "test", "vitest.config.ts", "tsup.config.ts", "typedoc.config.ts"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules", "test/fixtures/scenarios", "test/fixtures/repo"]
 }

@@ -1,7 +1,7 @@
 import type { RuntimeContext } from '../../types/runtime.js';
 import { formatError, toCliError } from '../../core/errors/errors.js';
 
-export type CommanderAction = (...args: unknown[]) => Promise<void> | void;
+export type CommanderAction<T extends unknown[] = unknown[]> = (...args: T) => Promise<void> | void;
 
 export function getRuntimeContext(args: unknown[]): RuntimeContext {
   for (let i = args.length - 1; i >= 0; i--) {
@@ -15,8 +15,10 @@ export function getRuntimeContext(args: unknown[]): RuntimeContext {
   throw new Error('Runtime context was not initialized.');
 }
 
-export function withErrorHandling(action: CommanderAction): CommanderAction {
-  return async (...args: unknown[]) => {
+export function withErrorHandling<T extends unknown[]>(
+  action: CommanderAction<T>,
+): CommanderAction<T> {
+  return async (...args: T) => {
     try {
       await action(...args);
     } catch (error) {
